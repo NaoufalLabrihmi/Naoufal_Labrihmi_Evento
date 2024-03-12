@@ -164,9 +164,17 @@ class Custom
     public static function eventName($id)
     {
         $event = Events::where('event_id', '=', $id)->first();
-        $event_name = $event->event_name;
-        return $event_name;
+
+        // Check if $event is null
+        if ($event) {
+            // Event found, return event name
+            return $event->event_name;
+        } else {
+            // Event not found, return a default value or handle the error as needed
+            return "Event not found";
+        }
     }
+
 
     public static function followCheck($user_id, $org_id)
     {

@@ -13,4 +13,4 @@ class Organizer extends Authenticatable
     use Notifiable;
 
     protected $guard = 'organizer';
-} 
+}

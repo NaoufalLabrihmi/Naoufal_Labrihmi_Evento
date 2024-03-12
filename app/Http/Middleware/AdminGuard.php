@@ -16,9 +16,9 @@ class AdminGuard
      */
     public function handle(Request $request, Closure $next)
     {
-        if(session()->get('admin_id') == '1'){
+        if (session()->get('admin_id') == '1') {
             return $next($request);
-        }else{
+        } else {
             return redirect('/');
         }
     }

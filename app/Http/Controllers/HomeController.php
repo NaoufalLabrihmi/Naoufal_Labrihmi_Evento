@@ -3,68 +3,121 @@
 namespace App\Http\Controllers;
 
 use App\Custom;
+use App\Mail\TicketValidated;
+use App\Models\Admin;
 use App\Models\BuyTickets;
 use App\Models\Cities;
 use App\Models\EventImages;
 use App\Models\eventReviews;
 use App\Models\Events;
+use App\Models\EventType;
 use App\Models\Followers;
 use App\Models\Notification;
 use App\Models\Organizer;
 use App\Models\User;
 use App\Models\Users;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Charts\EventChart;
+use App\Charts\UserChart;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        // $featured = $request['featured'] ?? "";
-        // $freeEvents = $request['freeEvents'] ?? "";
-        // $paidEvents = $request['paidEvents'] ?? "";
+        $events = Events::orderBy('event_id', 'desc')
+            ->where('event_status', '=', 1) // Only approved events
+            ->where('approved', 1) // Check if the event is approved
+            ->paginate(6);
 
-        // if($freeEvents != ""){
-        //   $events = Events::orderBy('event_id', 'desc')->where("event_subscription", "=", $freeEvents)->paginate(6);
-        //   // $eventCount = $events->count();
-        // }else if($paidEvents != ""){
-        //   $events = Events::orderBy('event_id', 'desc')->where("event_subscription", "=", $paidEvents)->paginate(6);
-        //   // $eventCount = $events->count();
-        // }else{
-        $events = Events::orderBy('event_id', 'desc')->where('event_status', '=', 1)->paginate(6);
-        $paidEvents = Events::where('event_subscription', '=', 'P')->orderBy('event_id', 'desc')->paginate(5);
-        $freeEvents = Events::where('event_subscription', '=', 'F')->orderBy('event_id', 'desc')->paginate(5);
+        $paidEvents = Events::where('event_subscription', '=', 'P')
+            ->where('event_status', '=', 1) // Only approved events
+            ->orderBy('event_id', 'desc')
+            ->where('approved', 1) // Check if the event is approved
+            ->paginate(5);
+
+        $freeEvents = Events::where('event_subscription', '=', 'F')
+            ->where('event_status', '=', 1) // Only approved events
+            ->orderBy('event_id', 'desc')
+            ->where('approved', 1) // Check if the event is approved
+            ->paginate(5);
+
         $eventCount = "";
-        // }
+        $categories = EventType::withCount('events')->get();
 
-        // $events = Events::all();
+        // Retrieve all event images
         $eventImages = EventImages::all();
 
-        $islamabadEvents = Events::where('event_location', '=', 6)->get();
-        $islamabad = $islamabadEvents->where('event_start_date', '>', date('Y-m-d'))->count();
-        $lahoreEvents = Events::where('event_location', '=', 14)->get();
-        $lahore = $lahoreEvents->where('event_start_date', '>', date('Y-m-d'))->count();
-        $karachiEvents = Events::where('event_location', '=', 2)->get();
-        $karachi = $karachiEvents->where('event_start_date', '>', date('Y-m-d'))->count();
-        $multanEvents = Events::where('event_location', '=', 38)->get();
-        $multan = $multanEvents->where('event_start_date', '>', date('Y-m-d'))->count();
+        // Count events for each location
+        // $islamabadEvents = Events::where('event_location', '=', 6)->get();
+        // $islamabad = $islamabadEvents->where('event_start_date', '>', date('Y-m-d'))->count();
+        // $lahoreEvents = Events::where('event_location', '=', 14)->get();
+        // $lahore = $lahoreEvents->where('event_start_date', '>', date('Y-m-d'))->count();
+        // $karachiEvents = Events::where('event_location', '=', 2)->get();
+        // $karachi = $karachiEvents->where('event_start_date', '>', date('Y-m-d'))->count();
+        // $multanEvents = Events::where('event_location', '=', 38)->get();
+        // $multan = $multanEvents->where('event_start_date', '>', date('Y-m-d'))->count();
 
+        // Retrieve all organizers
         $allOrganizers = Users::where('user_type', '=', 'OA')->get();
+
+        // Retrieve all cities
         $cities = Cities::all();
 
-        $data = compact('events', 'paidEvents', 'freeEvents', 'eventImages', 'islamabad', 'lahore', 'karachi', 'multan', 'allOrganizers', 'cities');
+        // Retrieve the selected event type from the request
+        $selectedEventType = $request->input('eventType', '');
+
+        // Retrieve all event types
+        $eventTypes = EventType::all();
+        // Count events for each city
+        $eventsCountByCity = Events::select('event_location', DB::raw('COUNT(*) as event_count'))
+            ->groupBy('event_location')
+            ->get()
+            ->keyBy('event_location');
+
+        $data = compact(
+            'events',
+            'paidEvents',
+            'freeEvents',
+            'eventImages',
+            'allOrganizers',
+            'cities',
+            'eventTypes',
+            'selectedEventType',
+            'categories',
+            'eventsCountByCity'
+        );
+
         return view('home')->with($data);
     }
 
 
 
+
+
     public function admin()
     {
-        // $notification = Notification::where('noti_status', '=', 0)->get();
-        // check($notification);
-        // $data = compact('notification');
-        //   return view('admin.dashboard')->with($data);
-        return view('admin.dashboard');
+        $totalUsers = User::where('user_type', 'U')->count() + Admin::where('user_type', 'U')->count() + Organizer::where('user_type', 'U')->count();
+        $totalOrganizers = Organizer::where('user_type', 'OA')->count() + User::where('user_type', 'OA')->count() + Admin::where('user_type', 'OA')->count();
+        $totalEvents = Events::count();
+        $totalEventTypes = EventType::count();
+        $eventTypes = EventType::all();
+        $events = Events::all();
+        $users = User::all();
+        $organizers = Organizer::all();
+
+
+
+
+        return view('admin.dashboard', compact('totalUsers', 'totalOrganizers', 'totalEvents', 'totalEventTypes', 'eventTypes', 'events'));
     }
+
 
     public function admin_notifications()
     {
@@ -79,7 +132,10 @@ class HomeController extends Controller
         $eventId = $events->event_id;
         $eventImages = EventImages::where('event_list_id', '=', $eventId)->get();
         $totalReviews = eventReviews::where('event_id', '=', $eventId)->count();
-        $data = compact('events', 'eventImages', 'totalReviews');
+        $city = Cities::find($events->event_location);
+
+        $data = compact('events', 'eventImages', 'totalReviews', 'city');
+
         return view('eventDetails')->with($data);
     }
 
@@ -102,53 +158,71 @@ class HomeController extends Controller
         }
     }
 
+    public function generateQRCode($ticket)
+    {
+        $event = Events::find($ticket->buyer_event_id);
+
+        // Check if $event is null
+        if ($event) {
+            // Generate QR code content
+            $qrCodeContent = "Name: " . $ticket->buyer_user_name . "\n";
+            $qrCodeContent .= "Email: " . $ticket->buyer_user_email . "\n";
+            $qrCodeContent .= "Event: " . $event->event_name;
+
+            $from = [255, 0, 0];
+            $to = [0, 0, 255];
+
+            // Generate QR code image
+            $qrCode = QrCode::size(100)
+                ->style('dot')
+                ->eye('circle')
+                ->gradient($from[0], $from[1], $from[2], $to[0], $to[1], $to[2], 'diagonal')
+                ->generate($qrCodeContent);
+
+            return $qrCode;
+        } else {
+            // Event not found, handle the error as needed
+            return "Event not found";
+        }
+    }
+
     public function buyEventTicket_details(Request $request)
     {
-        // checkArray($request);
         $request->validate([
             'buyerName' => 'required',
-            // 'buyerEmail' => 'required',
-            // 'buyerAddress' => 'required',
-            // 'buyerContact' => 'required',
             'buyerCnic' => 'required',
-            // 'buyerComment' => 'required',
-            // 'buyerPaymentMethod' => 'required',
             'buyerTicketPrice' => 'required',
+            'buyerEmail' => 'required',
         ]);
 
-        // $buyerName = $request->input('buyerName', []);
-        // $buyerEmail = $request->input('buyerEmail', []);
-        // $buyerAddress = $request->input('buyerAddress', []);
-        // $buyerContact = $request->input('buyerContact', []);
-        // $buyerComment = $request->input('buyerComment', []);
-        // $buyerPaymentMethod = $request->input('buyerPaymentMethod', []);
-        // checkArray($request);
         $quantity = $request['quantity'];
 
         $newCategoryArray = [
             "buyer_user_name" => $request->input('buyerName', []),
-            //  "buyer_user_email"=> $request->input('buyerEmail', []),
-            //  'buyer_user_address' =>  $request->input('buyerAddress', []),
-            //  "buyer_user_contact"=>  $request->input('buyerContact', []),
             "buyer_user_cnic" =>  $request->input('buyerCnic', []),
-            //  "buyer_user_comment"=>  $request->input('buyerComment', []),
-            //  "buyer_user_payment_method"=> $request->input('buyerPaymentMethod', []),
             "buyer_user_payment_method" => $request['buyerPaymentMethod'],
             "buyer_user_ticket_price" => $request['buyerTicketPrice'],
+            "buyer_user_email" => $request->input('buyerEmail', []),
             "buyer_user_id" => session()->get('user_id'),
             "buyer_event_id" => $request['buyerEventId'],
             "buyer_event_author_id" => $request['buyerEventAuthorId'],
         ];
-        // $totalRecords = count($newCategoryArray['buyer_user_name']);
+
+        // Determine the event's reservation method
+        $event = Events::find($request['buyerEventId']);
+        $reservationMethod = $event->event_reservation_method;
+
+        // Set validation column based on reservation method
+        $validation = ($reservationMethod == 'automatic') ? 1 : 0;
+
+        $ticketId = [];
+
         foreach ($request->input('buyerName', []) as $key => $value) {
-            # code...
             $buyTicket = new BuyTickets;
             $buyTicket->buyer_user_name = $newCategoryArray['buyer_user_name'][$key];
-            // $buyTicket->buyer_user_email = $newCategoryArray['buyer_user_email'][$key];
-            // $buyTicket->buyer_user_address = $newCategoryArray['buyer_user_address'][$key];
-            // $buyTicket->buyer_user_contact = $newCategoryArray['buyer_user_contact'][$key];
+            $buyTicket->buyer_user_email = $newCategoryArray['buyer_user_email'][$key];
             $buyTicket->buyer_user_cnic = $newCategoryArray['buyer_user_cnic'][$key];
-            // $buyTicket->buyer_user_comment = $newCategoryArray['buyer_user_comment'][$key];
+
             if ($request['buyerPaymentMethod'] != "") {
                 $buyTicket->buyer_user_payment_method = $request['buyerPaymentMethod'];
                 $buyTicket->buyer_user_payment_status = 'UP';
@@ -156,16 +230,22 @@ class HomeController extends Controller
                 $buyTicket->buyer_user_payment_method = 'N/A';
                 $buyTicket->buyer_user_payment_status = 'P';
             }
+
             $buyTicket->buyer_user_ticket_price = $newCategoryArray['buyer_user_ticket_price'];
             $buyTicket->buyer_user_id = $newCategoryArray['buyer_user_id'];
             $buyTicket->buyer_event_id = $newCategoryArray['buyer_event_id'];
             $buyTicket->buyer_event_author_id = $newCategoryArray['buyer_event_author_id'];
 
+            $buyTicket->validation = $validation; // Set the validation status
+
             $buyTicket->save();
             $ticketId[] = $buyTicket->buy_ticket_id;
 
+
+
+            // Create notification
             $notification = new Notification;
-            $notification->noti_title = 'Ticket Sold: ' . $buyTicket->buyer_user_name . ' Buy your Event ' . Custom::getEventTitle($buyTicket->buyer_event_id) . ' Ticket';
+            $notification->noti_title = 'Ticket Sold: ' . $buyTicket->buyer_user_name . ' bought a ticket for ' . Custom::getEventTitle($buyTicket->buyer_event_id);
             $notification->noti_for = 'OA';
             $notification->noti_forId = $buyTicket->buyer_event_author_id;
             $notification->noti_type = 'T';
@@ -174,8 +254,17 @@ class HomeController extends Controller
             $notification->save();
         }
 
-        //  check($ticketId);
         if ($buyTicket) {
+            // If validation is automatic, send confirmation message
+            if ($validation == 1) {
+                foreach ($ticketId as $id) {
+                    $ticket = BuyTickets::find($id);
+                    $qrCode = $this->generateQRCode($ticket);
+                    if ($ticket->buyer_user_email) {
+                        Mail::to($ticket->buyer_user_email)->send(new TicketValidated($ticket, $qrCode, $event));
+                    }
+                }
+            }
             if ($request['payNow'] == 'P') {
                 $eventData = Events::where('event_id', '=', $request['buyerEventId'])->first();
                 $eventId = $eventData->event_id;
@@ -200,6 +289,37 @@ class HomeController extends Controller
             return redirect()->back()->with('error', 'Something Went Wrong');
         }
     }
+
+    public function downloadTicketPDF($id)
+    {
+        $ticket = BuyTickets::find($id);
+        $event = Events::find($ticket->buyer_event_id);
+        $qrCode = $this->generateQRCode($ticket);
+
+        if (!$ticket) {
+            abort(404);
+        }
+        $qrCode = $this->generateQRCode($ticket); // This line generates the QR code
+
+        // Generate the PDF content
+        $pdfContent = view('ticket_pdf', compact('ticket', 'event', 'qrCode'))->render();
+
+        // Create Dompdf instance
+        $dompdf = new Dompdf();
+
+        // Load HTML content into Dompdf
+        $dompdf->loadHtml($pdfContent);
+
+        // (Optional) Set paper size and orientation
+        $dompdf->setPaper('A4', 'portrait');
+
+        // Render PDF (generate)
+        $dompdf->render();
+
+        // Output the generated PDF to the browser
+        return $dompdf->stream("ticket_{$id}.pdf");
+    }
+
 
     public function payment_confirmed(Request $request)
     {
@@ -255,7 +375,14 @@ class HomeController extends Controller
 
     public function dashboard()
     {
+
+
         $user_id = session()->get('user_id');
+        $eventList = Events::orderBy('event_id', 'desc')->where('event_author_id', '=', $user_id)->get();
+        $date = date('Y-m-d');
+        $completedTotalEvents = $eventList->where('event_start_date', '<', $date)->count();
+        $upcommingTotalEvents = $eventList->where('event_start_date', '>', $date)->count();
+
         //Event Count and Listing
         $totalEvents = Events::where('event_author_id', '=', $user_id)->count();
         $eventList = Events::orderBy('event_id', 'desc')->where('event_author_id', '=', $user_id)->paginate(3);
@@ -273,42 +400,59 @@ class HomeController extends Controller
         // print_r($soldTickets->toArray());
         // die;
         // $CompletedEvents = $eventList->where('event_end_date', '<', date('Y-m-d'))->get();
-        $data = compact('eventList', 'totalEvents', 'soldTickets', 'soldTicketsCount', 'totalEarnings');
+        $data = compact('eventList', 'totalEvents', 'soldTickets', 'soldTicketsCount', 'totalEarnings', 'completedTotalEvents', 'upcommingTotalEvents');
         return view('dashboard')->with($data);
     }
-
     public function events(Request $request)
     {
         $search = $request['search'] ?? "";
         $organizer = $request['organizer'] ?? "";
         $location = $request['location'] ?? "";
         $locationUpcoming = $request['locationUpcoming'] ?? "";
+        $eventType = $request['eventType'] ?? ""; // Add this line
 
-        if ($search != "") {
-            $events = Events::orderBy('event_id', 'desc')->where("event_name", "LIKE", "%$search%")->orWhere("event_slug", "LIKE", "%$search%")->paginate(3);
-            $eventCount = $events->count();
-        } else if ($organizer != "") {
-            $events = Events::orderBy('event_id', 'desc')->where("event_author_id", "=", "$organizer")->paginate(12);
-            $eventCount = $events->count();
-        } else if ($location != "") {
-            $events = Events::orderBy('event_id', 'desc')->where("event_location", "=", "$location")->paginate(12);
-            $eventCount = $events->count();
-        } else if ($locationUpcoming != "") {
-            $getEvents = Events::orderBy('event_id', 'desc')->where('event_location', '=', $locationUpcoming);
-            $events = $getEvents->where('event_start_date', '>', date('Y-m-d'))->paginate(12);
-            $eventCount = $events->count();
-        } else {
-            $events = Events::orderBy('event_id', 'desc')->where('event_status', '=', 1)->paginate(12);
-            $eventCount = "";
-        }
+        $cacheKey = 'events_' . md5(serialize([$search, $organizer, $location, $locationUpcoming, $eventType]));
+
+        $events = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($search, $organizer, $location, $locationUpcoming, $eventType) {
+            return Events::orderBy('event_id', 'desc')
+                ->where('approved', 1) // Check if the event is approved
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($query) use ($search) {
+                        $query->where("event_name", "LIKE", "%$search%")
+                            ->orWhere("event_slug", "LIKE", "%$search%");
+                    });
+                })
+                ->when($organizer, function ($query) use ($organizer) {
+                    $query->where("event_author_id", "=", $organizer);
+                })
+                ->when($location, function ($query) use ($location) {
+                    $query->where("event_location", "=", $location);
+                })
+                ->when($locationUpcoming, function ($query) use ($locationUpcoming) {
+                    $query->where('event_location', '=', $locationUpcoming)
+                        ->where('event_start_date', '>', date('Y-m-d'));
+                })
+                ->when($eventType, function ($query) use ($eventType) { // Add this condition
+                    $query->whereHas('eventType', function ($query) use ($eventType) {
+                        $query->where('event_type_name', '=', $eventType);
+                    });
+                })
+                ->paginate(6); // Pagination added here
+        });
+
+        $eventCount = $events->total();
+
+        // Retrieve the selected event type from the request
+        $selectedEventType = $request->input('eventType', '');
+
         $cities = Cities::all();
         $allOrganizers = Users::where('user_type', '=', 'OA')->get();
-        $data = compact('events', 'cities', 'location', 'allOrganizers', 'search', 'eventCount', 'organizer');
+        $eventTypes = EventType::all(); // Fetch all event types
+
+        $data = compact('events', 'cities', 'location', 'allOrganizers', 'search', 'eventCount', 'organizer', 'eventTypes', 'selectedEventType');
         return view('events')->with($data);
-        // echo '<pre>';
-        // print_r($organizers->toArray());
-        // die;
     }
+
 
     public function userProfile()
     {

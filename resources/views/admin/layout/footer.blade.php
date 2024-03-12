@@ -36,42 +36,42 @@
          });
 
          //For User registeration
-         $(document).on('click', '.register-btn', function(e) {
-             e.preventDefault();
-             $.ajax({
-                 type: "POST",
-                 url: "{{route('register_check')}}",
-                 data: $("#registerform").serialize(),
-                 dataType: "json",
-                 success: function(response) {
-                     if (response.errors) {
-                         console.log(response.errors);
-                         $('#register_errList').html("");
-                         $('#register_errList').addClass("alert alert-danger");
-                         $.each(response.errors, function(key, arr_values) {
-                             $('#register_errList').append('<li>' + arr_values + '</li>')
-                         })
-                     } else {
-                         Swal.fire(
-                             'Registered!',
-                             'You have been register successfully.',
-                             'success'
-                         )
-                         console.log(response);
-                         setInterval(() => {
-                             window.location.href = "{{route('admin.users')}}";
-                         }, 1000);
-                     }
-                 }
-             });
-         });
+         //  $(document).on('click', '.register-btn', function(e) {
+         //      e.preventDefault();
+         //      $.ajax({
+         //          type: "POST",
+         //          url: "{{route('register_check')}}",
+         //          data: $("#registerform").serialize(),
+         //          dataType: "json",
+         //          success: function(response) {
+         //              if (response.errors) {
+         //                  console.log(response.errors);
+         //                  $('#register_errList').html("");
+         //                  $('#register_errList').addClass("alert alert-danger");
+         //                  $.each(response.errors, function(key, arr_values) {
+         //                      $('#register_errList').append('<li>' + arr_values + '</li>')
+         //                  })
+         //              } else {
+         //                  Swal.fire(
+         //                      'Registered!',
+         //                      'You have been register successfully.',
+         //                      'success'
+         //                  )
+         //                  console.log(response);
+         //                  setInterval(() => {
+         //                      window.location.href = "{{route('admin.users')}}";
+         //                  }, 1000);
+         //              }
+         //          }
+         //      });
+         //  });
 
 
 
          //For organization registeration
          $(document).on('click', '.org-register-btn', function(e) {
              e.preventDefault();
-             // formData = $("#orgRegisterform").serialize(),
+             //  formData = $("#orgRegisterform").serialize(),
              $.ajax({
                  type: "POST",
                  url: "{{route('org_register_check')}}",

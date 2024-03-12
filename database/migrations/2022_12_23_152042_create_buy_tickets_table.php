@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('buyer_user_id');
             $table->string('buyer_event_id');
             $table->string('buyer_event_author_id');
+            $table->boolean('validation')->default(0); // Added validation column
             $table->timestamps();
         });
     }

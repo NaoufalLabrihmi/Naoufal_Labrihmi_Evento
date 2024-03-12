@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
-use App\Models\Events;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class EventsSeeder extends Seeder
 {
@@ -17,27 +16,35 @@ class EventsSeeder extends Seeder
      */
     public function run()
     {
-        $numberOfEvents = 20;
+        // Define an array of event data
+        $events = [];
 
-        for ($i = 1; $i <= $numberOfEvents; $i++) {
-            Events::create([
+        // Loop to create 8 events
+        for ($i = 1; $i <= 8; $i++) {
+            $events[] = [
                 'event_name' => 'Event ' . $i,
-                'event_start_date' => now()->addDays($i),
-                'event_start_time' => '09:00', // Example start time
-                'event_end_date' => now()->addDays($i + 2),
-                'event_end_time' => '17:00', // Example end time
-                'event_location' => 'Location ' . $i,
-                'event_address' => 'Address ' . $i,
+                'event_start_date' => Carbon::now()->addDays($i),
+                'event_start_time' => '09:00:00',
+                'event_end_date' => Carbon::now()->addDays($i),
+                'event_end_time' => '17:00:00',
+                'event_location' => rand(8, 11), // Replace with actual city ID range
+                'event_address' => '123 Main St',
                 'event_slug' => Str::slug('Event ' . $i),
-                'event_author_id' => '1', // Assuming event author ID is 1 for simplicity
-                'event_guestCapacity' => rand(50, 200), // Example guest capacity
-                'event_subscription' => $i % 2 == 0 ? 'F' : 'P', // Alternating between F: Free and P: Paid
-                'event_ticket_price' => $i % 2 == 0 ? null : rand(10, 100), // Random ticket price for paid events
+                'event_author_id' => rand(1, 4), // Replace with actual author ID range
+                'event_guestCapacity' => 100,
+                'event_subscription' => 'P',
+                'event_ticket_price' => '10.00',
                 'event_status' => 1,
-                'event_description' => 'Description for Event ' . $i,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+                'approved' => 1,
+                'event_description' => 'Description of Event ' . $i,
+                'event_reservation_method' => 'automatic',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'event_type_id' => rand(1, 5)
+            ];
         }
+
+        // Insert events into the database
+        DB::table('events')->insert($events);
     }
 }

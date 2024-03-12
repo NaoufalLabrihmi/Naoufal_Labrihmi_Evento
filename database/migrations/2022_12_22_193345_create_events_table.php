@@ -27,8 +27,10 @@ return new class extends Migration
             $table->string('event_guestCapacity');
             $table->enum('event_subscription', ['P', 'F']);
             $table->string('event_ticket_price')->nullable();
-            $table->boolean('event_status')->default(1);
+            $table->boolean('event_status')->default(1); // Default status
+            $table->boolean('approved')->default(0); // Approval status
             $table->longText('event_description');
+            $table->enum('event_reservation_method', ['automatic', 'manual']); // New column for reservation method
             $table->timestamps();
         });
     }

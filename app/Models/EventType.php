@@ -13,6 +13,9 @@ class EventType extends Model
     protected $table = 'event_type';
     protected $primaryKey = 'event_type_id';
 
+    protected $fillable = [
+        'event_type_name'
+    ];
     public function events()
     {
         return $this->hasMany(\App\Models\Events::class, 'event_type_id');

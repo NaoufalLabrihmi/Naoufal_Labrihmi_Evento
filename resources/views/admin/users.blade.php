@@ -35,7 +35,7 @@
                                     <th>Email</th>
                                     <th>Contact</th>
                                     <th>Address</th>
-                                    <th>Status</th>
+                                    <!-- <th>Status</th> -->
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -50,17 +50,13 @@
                                     <td>{{$user->email}}</td>
                                     <td>{{$user->contact}}</td>
                                     <td>{{$user->address}}</td>
-                                    <td>
-                                        <div class="switch_box box_1">
-                                            <input type="checkbox" class="switch_1 user_status" {{$user->status ? 'checked' : ''}} data-id="{{$user->id}}">
-                                        </div>
-                                    </td>
+
 
                                     <td>
                                         <!-- <button type="button" class="btn btn-primary editmodalbtn" data-toggle="modal" data-target="#editModal" data-id="{{$user->id}}">
                                     <i class="fa fa-edit"></i>
                                   </button> -->
-                                        <a href="{{ route('admin_user_edit_view', $user->id) }}" class="btn btn-primary m-1"><i class="fa fa-eye"></i></a>
+                                        <a href="{{ route('admin_user_edit_view', $user->id) }}" class="btn btn-primary m-1"><i class="fa fa-edit"></i></a>
                                         <a href="{{url('admin/users/delete')}}/{{$user->id}}" class="btn btn-danger m-1 deleteBtn "><i class="fa fa-trash"></i></a>
                                     </td>
                                 </tr>

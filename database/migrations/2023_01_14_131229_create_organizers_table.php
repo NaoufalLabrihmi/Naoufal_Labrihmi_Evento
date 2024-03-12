@@ -35,6 +35,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
         });
 
         DB::statement("ALTER TABLE organizers AUTO_INCREMENT = 5;");

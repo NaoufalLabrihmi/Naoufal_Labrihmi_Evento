@@ -51,15 +51,17 @@ Route::get('events/{slug}', [HomeController::class, 'eventDetails'])->name('even
 //Org Event Routes
 Route::get('myevents', [EventController::class, 'org_events'])->name('org_events')->middleware('org_guard');
 Route::get('create_event', [EventController::class, 'create_event'])->name('create_event')->middleware('org_guard');
-Route::post('create_event', [EventController::class, 'admin_storeEvent'])->name('create_event')->middleware('org_guard');
+Route::post('create_event', [EventController::class, 'organizer_storeEvent'])->name('create_event')->middleware('org_guard');
 Route::get('myevents/edit/{id}', [EventController::class, 'editEvent'])->name('editEvent')->middleware('org_guard');
-Route::post('myevents/edit/{id}', [EventController::class, 'admin_updateEvent'])->name('editEventImage');
+Route::post('myevents/edit/{id}', [EventController::class, 'org_updateEvent'])->name('editEventImage');
 
 Route::get('edit_event/image/{id}', [EventController::class, 'admin_editImage'])->name('admin_editImage');
 Route::get('myevents/delete/{id}', [EventController::class, 'deleteMyEvent'])->name('deleteMyEvent');
 
 Route::get('myTickets', [TicketController::class, 'org_tickets'])->name('org_tickets');
 Route::get('myTickets/{slug}', [TicketController::class, 'org_ticket_details'])->name('org_ticket_details');
+Route::put('/update-validation/{id}', [TicketController::class, 'updateStatus'])->name('updateValidation');
+
 
 Route::get('tickets/viewTicketDetails/{id}', [TicketController::class, 'viewTicketDetails'])->name('orgViewTicketDetails');
 
@@ -78,6 +80,7 @@ Route::get('myProfile/{id}', [HomeController::class, 'viewUserProfile'])->name('
 Route::post('myProfile/{id}', [HomeController::class, 'admin_updateUserProfile'])->name('admin_updateUserProfile');
 Route::post('user_following_check', [FollowersController::class, 'user_following_check'])->name('user_following_check')->middleware('unAuth_guard');
 Route::post('user_following_remove', [FollowersController::class, 'user_following_remove'])->name('user_following_remove')->middleware('unAuth_guard');
+Route::get('download-ticket-pdf/{id}', [HomeController::class, 'downloadTicketPDF'])->name('downloadTicketPDF');
 
 //Organizer Profile Routes
 Route::get('organizers', [HomeController::class, 'allOrganizers'])->name('allOrganizers');
@@ -137,6 +140,11 @@ Route::group(['middleware' => 'admin_guard', 'prefix' => 'admin'], function () {
     Route::get('/users/delete/{id}', [UserController::class, 'admin_user_delete']);
     Route::post('/users/status_check', [UserController::class, 'status_check'])->name('status_check');
     Route::get('/users/{id}/edit', [UserController::class, 'admin_user_edit_view'])->name('admin_user_edit_view');
+    Route::get('/organizations/register', [UserController::class, 'registerFormOrganizateur'])->name('admin.register');
+    Route::post('/organizations/register', [UserController::class, 'admin_org_register'])->name('admin.organizations');
+    Route::get('/organizations/delete/{id}', [UserController::class, 'admin_org_delete']);
+    Route::get('/organizers/{id}/edit', [UserController::class, 'editOrganizer'])->name('admin.organizers.edit');
+    Route::put('/organizers/update/{id}', [UserController::class, 'updateOrganizer'])->name('admin.organizers.update');
 
 
     //Event Routes
@@ -147,14 +155,27 @@ Route::group(['middleware' => 'admin_guard', 'prefix' => 'admin'], function () {
     Route::get('edit_event/image/{id}', [EventController::class, 'admin_editImage'])->name('admin_editImage');
     Route::post('edit_event/{id}', [EventController::class, 'admin_updateEvent'])->name('editEventImage');
     Route::get('/events/delete/{id}', [EventController::class, 'deleteEvent'])->name('admin.deleteEvent');
+    Route::patch('/events/approve/{eventId}', [EventController::class, 'approveEvent'])->name('admin.approve.event');
 
     //EventTypes Routes
     Route::get('/eventTypes', [EventController::class, 'eventTypes'])->name('admin.eventTypes');
     Route::post('/eventTypes/register/check', [EventController::class, 'eventTypes_register'])->name('eventTypes_register');
-    Route::post('/eventTypes/edit', [EventController::class, 'admin_eventType_edit'])->name('admin_eventType_edit');
-    Route::post('/eventType/update/{id}', [EventController::class, 'admin_eventType_update']);
+    // Route::post('/eventTypes/edit', [EventController::class, 'admin_eventType_edit'])->name('admin_eventType_edit');
+    // Route::post('/eventType/update/{id}', [EventController::class, 'admin_eventType_update'])->name('admin_eventType_update');
     Route::get('/eventType/delete/{id}', [EventController::class, 'admin_eventType_delete']);
     Route::get('/eventTypes/create', [EventController::class, 'createEventType'])->name('createEventType');
+    Route::get('/eventTypes/{id}/edit', [EventController::class, 'editEventType'])->name('editEventType');
+
+    // Route::get('eventTypes/edit/{id}', [EventController::class, 'admin_editEventType'])->name('admin.editEventType');
+    // Route::get('/eventTypesEditType/{event}', [EventController::class, 'editEventType'])->name('admin.editEventType');
+
+    Route::post('/eventTypesUpdateType/{eventType}', [EventController::class, 'updateEventType'])->name('admin.updateEventType');
+    Route::get('/admin/eventTypes/edit/{id}', [EventController::class, 'editEventType'])->name('admin.editEventType');
+    Route::put('/admin/updateEventType/{eventType}', [EventController::class, 'updateEventType'])->name('admin.updateEventType');
+
+
+
+
 
 
     // Guest Capacity Routes

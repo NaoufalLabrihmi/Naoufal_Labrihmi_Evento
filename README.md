@@ -1,66 +1,65 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Documentation du Projet Evento
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Contexte du Projet
 
-## About Laravel
+La société "Evento" ambitionne de développer une plateforme novatrice dédiée à la gestion et à la réservation des places d'événements. L'objectif est de fournir une expérience utilisateur optimale aux participants, organisateurs et administrateurs. Cette plateforme permettra aux utilisateurs de découvrir, réserver et générer des tickets pour une variété d'événements, tandis que les organisateurs auront la possibilité de créer et de gérer leurs propres événements.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fonctionnalités Requises
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Utilisateur
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- En tant qu'utilisateur, je veux pouvoir m'inscrire sur la plateforme en fournissant mon nom, mon adresse e-mail et un mot de passe.
+- En tant qu'utilisateur, je veux avoir la possibilité de me connecter à mon compte en utilisant mes identifiants.
+- En tant qu'utilisateur, je veux pouvoir réinitialiser mon mot de passe en cas d'oubli, en recevant un e-mail de réinitialisation.
+- En tant qu'utilisateur, je veux pouvoir consulter la liste des événements disponibles sur la plateforme avec pagination pour faciliter la navigation.
+- En tant qu'utilisateur, je veux pouvoir filtrer les événements par catégorie.
+- En tant qu'utilisateur, je veux pouvoir rechercher des événements par titre.
+- En tant qu'utilisateur, je veux pouvoir visualiser les détails d'un événement, y compris sa description, sa date, son lieu et le nombre de places disponibles.
+- En tant qu'utilisateur, je veux pouvoir réserver une place pour un événement.
+- En tant qu'utilisateur, je veux pouvoir générer un ticket une fois ma réservation confirmée.
 
-## Learning Laravel
+### Organisateur
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- En tant qu'organisateur, je veux pouvoir créer un nouvel événement en spécifiant son titre, sa description, sa date, son lieu, sa catégorie et le nombre de places disponibles.
+- En tant qu'organisateur, je veux pouvoir gérer mes événements.
+- En tant qu'organisateur, je veux avoir accès à des statistiques sur les réservations de mes événements.
+- En tant qu'organisateur, je veux avoir la possibilité de choisir entre une acceptation automatique des réservations ou une validation manuelle.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Administrateur
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- En tant qu'administrateur, je veux pouvoir gérer les utilisateurs en restreignant leur accès.
+- En tant qu'administrateur, je veux pouvoir gérer les catégories d'événements en ajoutant, modifiant ou supprimant des catégories.
+- En tant qu'administrateur, je veux pouvoir valider les événements créés par les organisateurs avant leur publication sur la plateforme.
+- En tant qu'administrateur, je veux avoir accès à des statistiques.
 
-## Laravel Sponsors
+## Technologies Utilisées
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- Laravel
+- PostgreSQL
+- SASS
+- JavaScript
 
-### Premium Partners
+## Procédure d'Installation
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+1. Cloner le dépôt GitHub.
+2. Installer les dépendances en exécutant `composer install`.
+3. Configurer le fichier `.env` avec les informations de la base de données PostgreSQL.
+4. Exécuter les migrations avec la commande `php artisan migrate`.
+5. Exécuter les seeds pour peupler la base de données avec des données d'exemple (`php artisan db:seed`).
 
-## Contributing
+## Structure du Projet
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- `app/` : Contient les modèles, les contrôleurs et d'autres classes de l'application.
+- `database/migrations/` : Contient les fichiers de migration de la base de données.
+- `resources/views/` : Contient les fichiers de vue Blade.
+- `routes/` : Contient les définitions des routes de l'application.
+- `public/` : Contient les ressources publiques telles que les fichiers CSS, JavaScript et les images.
 
-## Code of Conduct
+## Contribution
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Les contributions sont les bienvenues ! N'hésitez pas à soumettre des pull requests pour améliorer le projet.
 
-## Security Vulnerabilities
+## Licence
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Ce projet est sous licence MIT. Voir le fichier LICENSE pour plus de détails.
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

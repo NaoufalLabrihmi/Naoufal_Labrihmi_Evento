@@ -3,28 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Custom;
+use App\Models\Admin;
 use App\Models\Followers;
 use App\Models\Notification;
+use App\Models\Organizer;
 use App\Models\User;
 use App\Models\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = Users::orderBy('id', 'desc')->where('user_type', '=', 'U')->paginate(10);
+        $users = DB::table('users')
+            ->select('id', 'name', 'email', 'contact', 'address')
+            ->where('user_type', '=', 'U')
+            ->orderBy('id', 'desc')
+            ->union(
+                DB::table('organizers')
+                    ->select('id', 'name', 'email', 'contact', 'address')
+                    ->where('user_type', '=', 'U')
+            )
+            ->union(
+                DB::table('admins')
+                    ->select('id', 'name', 'email', 'contact', 'address')
+                    ->where('user_type', '=', 'U')
+            )
+            ->paginate(10);
         $data = compact('users');
         return view('admin.users')->with($data);
     }
 
     public function organizations()
     {
+        // Fetch users from the 'users' table
         $users = Users::where('user_type', '=', 'OA')->get();
-        $data = compact('users');
-        return view('admin.organization')->with($data);
+
+        // Fetch organizers from the 'organizers' table
+        $organizers = Organizer::where('user_type', '=', 'OA')->get();
+
+        // Combine the users and organizers into a single collection
+        $allOrganizers = $users->merge($organizers);
+
+        // Pass the combined data to the view
+        return view('admin.organization', compact('allOrganizers'));
     }
 
     public function status_check(Request $request)
@@ -77,9 +103,50 @@ class UserController extends Controller
         return redirect()->route('admin.users')->with('success', 'User has been registered successfully.');
     }
 
+
+    public function admin_org_register(Request $request)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed',
+            'org_name' => 'nullable|string',
+            'contact' => 'nullable|string',
+            'address' => 'nullable|string',
+            'org_type' => 'nullable|string',
+        ]);
+
+        // If validation fails, redirect back with errors
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Create a new organizer instance and save it to the database
+        $organizer = new \App\Models\Organizer(); // Adjust the namespace as per your folder structure
+        $organizer->name = $request->input('name');
+        $organizer->org_name = $request->input('org_name');
+        $organizer->email = $request->input('email');
+        $organizer->contact = $request->input('contact');
+        $organizer->address = $request->input('address');
+        $organizer->user_type = $request->input('org_type', 'OA'); // Set default if not provided
+        $organizer->password = Hash::make($request->input('password')); // Use Hash::make for password hashing
+        $organizer->save();
+
+        // Redirect back with a success message
+        return redirect()->route('admin.organization')->with('success', 'Organizer has been registered successfully.');
+    }
+
+
+
     public function registerForm()
     {
         return view('admin.register'); // Assuming you have a view file named register.blade.php
+    }
+
+    public function registerFormOrganizateur()
+    {
+        return view('admin.registerOrg'); // Assuming you have a view file named register.blade.php
     }
 
 
@@ -94,7 +161,7 @@ class UserController extends Controller
     }
     public function admin_user_edit_view($id)
     {
-        $user = Users::find($id);
+        $user = User::where('user_type', 'U')->find($id) ? User::find($id) : Organizer::find($id);
         return view('admin.user_edit')->with('user', $user);
     }
 
@@ -109,22 +176,88 @@ class UserController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         } else {
+            // Find the user by ID
+            $user = User::where('user_type', 'U')->find($id) ? User::find($id) : Organizer::find($id);
 
-            $user = Users::find($id);
+            // Check if the user exists
+            if (!$user) {
+                return redirect()->back()->with('error', 'User not found.');
+            }
+
+            // Update user data
             $user->name = $request['editname'];
             $user->email = $request['editemail'];
             $user->contact = $request['editcontact'];
             $user->address = $request['editaddress'];
             $user->user_type = $request->input('editusertype'); // Update user type
-            $user->update();
+
+            // Save the updated user
+            $user->save();
+
             return redirect()->route('admin.users')->with('success', 'User has been updated successfully.');
         }
     }
 
+
+
+    public function editOrganizer($id)
+    {
+        // Fetch the organizer from the organizers table
+        $user = Organizer::where('user_type', 'OA')->find($id) ? Organizer::find($id) : Users::find($id);
+
+        // Pass the organizer data to the view
+        return view('admin.editOrg', compact('user'));
+    }
+    public function updateOrganizer(Request $request, $id)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'user_type' => 'required|in:A,U,OA',
+        ]);
+
+        // If validation fails, redirect back with errors
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Find the organizer by ID
+        $organizer = Organizer::find($id);
+        if (!$organizer) {
+            // If organizer is not found, check if it's a user
+            $organizer = User::find($id);
+            if (!$organizer) {
+                // If not found, check if it's an admin
+                $organizer = Admin::find($id);
+            }
+        }
+
+        // If organizer not found, return error
+        if (!$organizer) {
+            return redirect()->back()->with('error', 'Organizer not found.');
+        }
+
+        // Update organizer data
+        $organizer->name = $request->input('name');
+        $organizer->user_type = $request->input('user_type'); // Update user type
+        $organizer->email = $request->input('email');
+        $organizer->org_name = $request->input('org_name');
+        $organizer->contact = $request->input('contact');
+        $organizer->address = $request->input('address');
+        // Save the updated organizer
+        $organizer->save();
+
+        // Redirect back with success message
+        return redirect()->route('admin.organization')->with('success', 'Organizer updated successfully.');
+    }
+
+
     public function admin_user_delete($id)
     {
-        $user = Users::find($id);
-
+        $user = User::where('user_type', 'U')->find($id) ? User::find($id) : Organizer::find($id);
+        if (!$user) {
+            $user = Admin::find($id);
+        }
         if (!$user) {
             return redirect()->back()->with('error', 'User not found.');
         }
@@ -132,6 +265,19 @@ class UserController extends Controller
         $user->delete(); // Soft delete
 
         return redirect()->back()->with('success', 'User deleted successfully.');
+    }
+
+    public function admin_org_delete($id)
+    {
+        $user = Organizer::where('user_type', 'OA')->find($id) ? Organizer::find($id) : Users::find($id);
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'Organizer not found.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Organizer deleted successfully.');
     }
 
 

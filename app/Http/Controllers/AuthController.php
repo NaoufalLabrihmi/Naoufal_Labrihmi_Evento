@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Custom;
+use App\Models\Admin;
 use App\Models\Notification;
 use App\Models\Organizer;
 use App\Models\User;
@@ -102,11 +103,22 @@ class AuthController extends Controller
             session()->put('event_author_id', $user->id); // Set the event_author_id for admin
             session()->put('user_type', 'A');
             return response()->json(['success']);
+        } elseif (Auth::guard('organizer')->attempt(['email' => $request['email'], 'password' => $request['password']])) {
+            // Handle organizer login
+            $user = Auth::guard('organizer')->user();
+            // Set session variables for organizers
+            session()->put('user_id', $user->id);
+            session()->put('user_name', $user->name);
+            session()->put('org_name', $user->org_name);
+            session()->put('user_email', $user->email);
+            session()->put('user_type', 'OA'); // Assuming 'OA' is the user_type for organizers
+            return response()->json(['success']);
         } else {
             // Login attempt failed
             return response()->json([0]);
         }
     }
+
 
 
     public function org_register()
@@ -155,14 +167,11 @@ class AuthController extends Controller
         }
     }
 
-
     // Show forgot password form
     public function showForgotPasswordForm()
     {
         return view('auth.forgot-password');
     }
-
-    // Send password reset link
     public function sendResetLinkEmail(Request $request)
     {
         $request->validate(['email' => 'required|email']);
@@ -213,7 +222,6 @@ class AuthController extends Controller
     {
         return Password::broker();
     }
-
 
 
     public function logout()

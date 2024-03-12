@@ -19,6 +19,7 @@ class CitiesSeeder extends Seeder
             ['name' => 'New York'],
             ['name' => 'Los Angeles'],
             ['name' => 'Chicago'],
+            ['name' => 'London']
             // Add more cities as needed
         ];
 
